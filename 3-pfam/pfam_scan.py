@@ -2,7 +2,6 @@ import os
 import sys
 import multiprocessing as mp
 import glob
-
 import datetime as DT
 from collections import defaultdict
 from hashlib import sha256
@@ -49,8 +48,6 @@ class PfamSearch(object):
         genome_id = filename.replace(self.pfam_suffix, '')
         output_tophit_file = os.path.join(self.output_dir, genome_id, filename.replace(self.pfam_suffix,
                                                                                        self.pfam_top_hit_suffix))
-
-
         tophits = defaultdict(dict)
         for line in open(pfam_file):
             if line[0] == '#' or not line.strip():
@@ -110,14 +107,7 @@ class PfamSearch(object):
                                                                     self.cpus_per_genome,
                                                                     gene_file,
                                                                     self.pfam_hmm_dir)
-                # osexitcode = os.system(cmd)
-                # if osexitcode == 1:
-                #     raise RuntimeError("Pfam_search has crashed")
                 os.system(cmd)
-                #ret = _run_command(cmd, retry=3)
-                #if ret.returncode != 0:
-                    #raise RuntimeError("Pfam_search has crashed")
-
                 # calculate checksum
                 checksum = sha256(output_hit_file.encode("utf-8")).hexdigest()
                 fout = open(output_hit_file + self.checksum_suffix, 'w')
@@ -192,7 +182,6 @@ class PfamSearch(object):
         except:
             for p in workerProc:
                 p.terminate()
-
             writeProc.terminate()
             raise
 
@@ -213,16 +202,10 @@ def main():
                  checksum_suffix,
                  output_dir)
 
-    # input_dir = "/var/zjl/Seagate8T/9-workdir/pfam_scan/input_dir"
     input_dir = "/home/wbq/1/Bacteria/single_node/Spirochaetes_order/faa"
     faa_files = sorted(glob.glob(os.path.join(input_dir, '*'+protein_file_suffix)))
-
-    #first N genomes.
-    #N = 2000
-    #faa_files = faa_files[N:]
-
-    #print("\n__START__ pfam_scan fisrt {} CompleteGenomes...\n".format(N))
     pfam_scan.run(faa_files)
+
 
 if __name__ == '__main__':
     main()
