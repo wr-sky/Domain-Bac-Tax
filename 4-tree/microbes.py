@@ -9,12 +9,16 @@ from typing import Iterable
 from Bio import Phylo
 from math import sqrt
 from collections import defaultdict
-import config as Config
 import multiprocessing as mp
 import math
 
+PROTEIN_FILE_SUFFIX = ".faa"
+PFAM_SUFFIX = "_pfam.tsv"
+PFAM_TOP_HIT_SUFFIX = "_pfam_tophit.tsv"
+CHECKSUM_SUFFIX = ".sha256"
 DEBUG = True
 MODULES = ('Family', 'Domain', 'Disordered', ' Coiled-Coil')
+
 
 class Microbes(object):
     """Identify and define microbes."""
@@ -47,11 +51,11 @@ class Microbes(object):
                 line = line.strip()
                 if not line or line.startswith("#"):
                     continue
-                line_split  = line.split()
-                gene_id     = line_split[0]
-                hmm_id      = line_split[5]
-                hmm_type    = line_split[7]
-                bitscore    = float(line_split[11])
+                line_split = line.split()
+                gene_id = line_split[0]
+                hmm_id = line_split[5]
+                hmm_type = line_split[7]
+                bitscore = float(line_split[11])
 
                 if gene_id in top_hits:
                     if hmm_id in top_hits[gene_id]:
@@ -217,24 +221,6 @@ class Microbes(object):
 
         return microbe
 
-    """
-    def _define_microbe_by_module_freq_set(self, pfam_file):
-
-        microbe = defaultdict(int)
-        modules = ('Family', 'Domain')
-
-        good_hits = self._get_hits(pfam_file, coverage=0.6)
-        for gene_id, hits in good_hits.items():
-
-            for hmm_alignment in sorted(hits.keys(), key=lambda k: k[1]):
-                hmm_id, a_start, a_end = hmm_alignment
-                hmm_type = hits[hmm_alignment][0]
-                if hmm_type in modules:
-                    microbe[hmm_id] += 1
-
-        return ('{}_{}'.format(pf, freq) for pf, freq in microbe.items())
-    """
-
     def _define_microbes_by_vector_set(self, pfam_file):
         """Define a microbe by its genome's protein vector set. If a protein(P)'s sequence has two Pfam entries
         hits PF1 and PF2, then we use <PF1, PF2> indicate P. The set of all protein vectors is used to represent
@@ -276,30 +262,6 @@ class Microbes(object):
                 microbe.append('_'.join(protein))
 
         return microbe
-
-    """
-    def _define_microbes_by_freq_vector_set(self, pfam_file):
-        # Define a microbe by its genome's protein functional module vector and its frequency. If protein <PF1, PF2>
-        # appears 3 times, then add e entry `<PF1, PF2, 3>` to its genome set. Then the set of al protein and their freq
-        # vectors is used to represent this genome.
-
-
-        microbe = defaultdict(int)
-
-        good_hits = self._get_hits(pfam_file, coverage=0.6)
-        for gene_id, hits in good_hits.items():
-            protein = []
-
-            for hmm_alignment in sorted(hits.keys(), key=lambda k: k[1]):
-                hmm_id, a_start, a_end = hmm_alignment
-                hmm_type = hits[hmm_alignment][0]
-                if hmm_type in MODULES:
-                    protein.append(hmm_id)
-            if protein:
-                microbe['_'.join(protein)] += 1
-
-        return ('{}_{}'.format(pv, freq) for pv, freq in microbe.items())
-    """
 
     def define_microbes(self, by="module", output=None, selected_ids=None):
         """According to functional `module`, define all microbes under `pfam_scan_out_dir`(Pfam_scan output
@@ -357,20 +319,6 @@ class Microbes(object):
             count += min(listA.count(i), listB.count(i))
         return count
 
-        """
-        number = 0
-        for i in listA:
-            count = 0
-            for j in listB:
-                if i == j:
-                    number += 1
-                    del listB[count]
-                    break
-                else:
-                    count += 1
-        return number
-        """
-
     def compute_distance(self, defined_microbes, method, process_num, p_rank, output):
         microbes = pd.read_csv(defined_microbes, sep='\t', index_col=False, dtype={"GCF": object})
         distances = dict()
@@ -403,7 +351,6 @@ class Microbes(object):
         output = output.split('.')[0] + '_' + str(p_rank) + '.json'
         with open(output, "w") as fout:
             json.dump(distances, fout)
-
 
     def compute_jaccard_distances(self, by, defined_microbes, method, output, redefine_microbes=False, sep='-'):
         """Compute genomes' Jaccard distances and save them into a json file.
@@ -576,17 +523,16 @@ def main():
                         pfam_top_hit_suffix=Config.PFAM_TOP_HIT_SUFFIX,
                         checksum_suffix=Config.CHECKSUM_SUFFIX)
 
-    # for define_by in ['vector_freq', 'vector', 'module', 'module_freq']:
-    for define_by in ['vector', 'module']:
+    for define_by in ['vector_freq', 'vector', 'module', 'module_freq']:
         print("\n\tRun microbes define_by: [{}]".format(define_by))
         defined_microbes = output_dir + "/{}_defined_microbes.tsv".format(define_by)
         if not os.path.exists(defined_microbes):
             microbes.define_microbes(by=define_by, output=defined_microbes)
         #_thread.start_new_thread(microbes.compute_jaccard_distances, (define_by, defined_microbes, jaccard_distances, False))
-        for define_method in ['jaccard']:
-        # for define_method in ['jaccard', 'dc', 'do']:
+        for define_method in ['jaccard', 'dc', 'do']:
             jaccard_distances = output_dir + "/{}/{}_genomes_{}_distances.json".format(define_method, define_by, define_method)
             microbes.compute_jaccard_distances(by=define_by, defined_microbes=defined_microbes, method=define_method, output=jaccard_distances, redefine_microbes=False)
+
 
 if __name__ == '__main__':
     main()
