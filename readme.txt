@@ -15,7 +15,6 @@
 
 5-taxonomy
     -- ncbi_taxonomy.py: Matching the GCF number with taxonomy categories according to NCBI taxdump database
-    -- phyla_itol.py: Creating the file that connects phyla that we focus with different colors so that the corresponding nodes can be colored in Cytoscape. 
 
 6-clustering
     -- MST_counter_NCBI.py：Clustering MST according to NCBI database and collect the clustering result.
