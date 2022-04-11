@@ -23,4 +23,4 @@
 7-data
     -- pfam_tophit: The output in '3-pfam' process with each file containing the protein domain information.
     -- json_edgelist: Including two kinds of file formats, '*.json' and '*.edgelist'. The json file contains documents recording the distance of each pair of species; The edgelist file contains documents recording the MST structures.
-    -- gcf_taxonomy: A document recording the connection between GCF and taxonomy, which can be utilized by Cytoscape to color corresponding nodes. 
+    -- gcf_taxonomy: Documents recording the connection between GCF and taxonomy (by NCBI and GTDB), which can be utilized by Cytoscape to color corresponding nodes and as clustering references. 
